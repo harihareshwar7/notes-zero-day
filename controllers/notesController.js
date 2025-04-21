@@ -65,7 +65,7 @@ async function saveNoteWithPDF(noteData, pdfBuffer) {
     timestamp: Date.now(), // Use a plain timestamp instead of serverTimestamp()
   };
 
-  const userDocRef = doc(db, 'saved-notes', noteData.uid);
+  const userDocRef = doc(db, 'saved-notes-zero', noteData.uid);
   const userDocSnap = await getDoc(userDocRef);
   if (userDocSnap.exists()) {
     await updateDoc(userDocRef, {
@@ -89,6 +89,19 @@ exports.saveNote = async (req, res) => {
     const pdfBuffer = await generatePDF(req.body);
     const result = await saveNoteWithPDF(req.body, pdfBuffer);
     res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.getUserNotes = async (req, res) => {
+  try {
+    const userDocRef = doc(db, 'saved-notes-zero', req.params.uid);
+    const userDocSnap = await getDoc(userDocRef);
+    if (!userDocSnap.exists()) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json(userDocSnap.data());
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
